@@ -8,6 +8,12 @@
 #include "../../common/twlwram.h"
 #include "fvPlayer7.h"
 
+#ifdef LARGE_DLDI
+#define dldiLen 0x80 // Header only (DLDI is run from main memory)
+#else
+#define dldiLen 16 * 1024
+#endif
+
 #define FV_AUDIO_START_OFFSET 12
 
 #define FV_AUDIO_CH_LEFT  1
@@ -315,11 +321,8 @@ static void handleFifo(u32 value)
 
         case IPC_CMD_SETUP_DLDI:
         {
-            if (!isDSiMode())
-            {
-                memcpy((void*)0x037F8000, (void*)(value & IPC_CMD_ARG_MASK), 16 * 1024);
-                fat_mountDldi();
-            }
+            memcpy((void*)0x037F8000, (void*)(value & IPC_CMD_ARG_MASK), dldiLen);
+            fat_mountDldi();
             fifoSendValue32(FIFO_USER_01, IPC_CMD_PACK(IPC_CMD_SETUP_DLDI, 0));
             break;
         }

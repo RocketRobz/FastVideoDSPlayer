@@ -30,7 +30,11 @@
 	.global gDldiStub
 @---------------------------------------------------------------------------------
 
+#ifdef LARGE_DLDI
+.equ DLDI_ALLOCATED_SPACE,		32768
+#else
 .equ DLDI_ALLOCATED_SPACE,		16384
+#endif
 
 gDldiStub:
 
@@ -41,9 +45,15 @@ dldi_start:
 	.word	0xBF8DA5ED		@ Magic number to identify this region
 	.asciz	" Chishm"		@ Identifying Magic string (8 bytes with null terminator)
 	.byte	0x01			@ Version number
+#ifdef LARGE_DLDI
+	.byte	DLDI_SIZE_32KB	@32KiB	@ Log [base-2] of the size of this driver in bytes.
+	.byte	0x00			@ Sections to fix
+	.byte 	DLDI_SIZE_32KB	@32KiB	@ Log [base-2] of the allocated space in bytes.
+#else
 	.byte	DLDI_SIZE_16KB	@16KiB	@ Log [base-2] of the size of this driver in bytes.
 	.byte	0x00			@ Sections to fix
 	.byte 	DLDI_SIZE_16KB	@16KiB	@ Log [base-2] of the allocated space in bytes.
+#endif
 	
 @---------------------------------------------------------------------------------
 @ Text identifier - can be anything up to 47 chars + terminating null -- 16 bytes
@@ -53,8 +63,13 @@ dldi_start:
 @---------------------------------------------------------------------------------
 @ Offsets to important sections within the data	-- 32 bytes
 	.align	6
-	.word   0x037F8000 //dldi_start		@ data start
-	.word   0x037FC000 //dldi_end		@ data end
+#ifdef LARGE_DLDI
+	.word   dldi_start		@ data start
+	.word   dldi_end		@ data end
+#else
+	.word   0x037F8000		@ data start
+	.word   0x037FC000		@ data end
+#endif
 	.word	0x00000000		@ Interworking glue start	-- Needs address fixing
 	.word	0x00000000		@ Interworking glue end
 	.word   0x00000000		@ GOT start					-- Needs address fixing

@@ -8,6 +8,12 @@
 #include "gui/PlayerController.h"
 #include "../../common/twlwram.h"
 
+#ifdef LARGE_DLDI
+#define dldiLen 32 * 1024
+#else
+#define dldiLen 16 * 1024
+#endif
+
 static DTCM_BSS fv_player_t sPlayer;
 
 static PlayerController* sPlayerController;
@@ -40,10 +46,10 @@ int main(int argc, char** argv)
     if (canUseWram && (handShake & IPC_CMD_ARG_MASK) == 0)
         canUseWram = false;
 
-    if (!isDSiMode())
+    if (!isDSiMode() || (argc >= 2 && strncmp(argv[1], "fat:", 4) == 0))
     {
-        // setup dldi on arm7 if not on dsi
-        DC_FlushRange(gDldiStub, 16 * 1024);
+        // setup dldi on arm7
+        DC_FlushRange(gDldiStub, dldiLen);
         fifoSendValue32(FIFO_USER_01, IPC_CMD_PACK(IPC_CMD_SETUP_DLDI, (u32)gDldiStub));
         fifoWaitValue32(FIFO_USER_01);
         fifoGetValue32(FIFO_USER_01);
